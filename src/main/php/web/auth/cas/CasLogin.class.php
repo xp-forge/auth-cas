@@ -19,8 +19,13 @@ use web\session\Sessions;
 class CasLogin implements Filter {
   private $sso, $sessions;
 
-  /** Creates a new instance with a given SSO base url */
-  public function __construct(string $sso, Sessions $sessions) {
+  /**
+   * Creates a new instance with a given SSO base url and sessions implementation
+   *
+   * @param  string $sso
+   * @param  web.session.Sessions $sessions
+  */
+  public function __construct($sso, Sessions $sessions) {
     $this->sso= rtrim($sso, '/');
     $this->sessions= $sessions;
   }

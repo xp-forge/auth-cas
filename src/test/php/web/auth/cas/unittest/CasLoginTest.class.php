@@ -10,7 +10,7 @@ use web\io\TestInput;
 use web\io\TestOutput;
 use web\Request;
 use web\Response;
-use web\session\InMemory;
+use web\session\ForTesting;
 
 class CasLoginTest extends TestCase {
   const SSO    = 'https://sso.example.com';
@@ -20,7 +20,7 @@ class CasLoginTest extends TestCase {
 
   /** @return void */
   public function setUp() {
-    $this->sessions= new InMemory();
+    $this->sessions= new ForTesting();
   }
 
   /**
@@ -166,10 +166,10 @@ class CasLoginTest extends TestCase {
     $session= $this->sessions->create();
     $session->register('user', ['username' => 'test']);
 
-    $this->assertEquals('Invoked', $login->filter(
+    $this->assertEquals('Invoked test', $login->filter(
       new Request(new TestInput('GET', '/', ['Cookie' => 'session='.$session->id()])),
       new Response(new TestOutput()),
-      new Invocation(function($req, $res) { return 'Invoked'; }
+      new Invocation(function($req, $res) { return 'Invoked '.$req->value('user')['username']; }
     )));
   }
 

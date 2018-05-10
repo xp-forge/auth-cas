@@ -99,10 +99,10 @@ class CasLogin implements Filter {
     // Handle session
     if ($session= $this->sessions->locate($request->cookie('session'))) {
       try {
-        if ($session->valid()) {
-          $request->pass('user', $session->value('user'));
-          return $invocation->proceed($request, $response);
-        }
+        $request->pass('user', $session->value('user'));
+        return $invocation->proceed($request, $response);
+      } catch (SessionInvalid $e) {
+        // Fall through, relogin
       } finally {
         $session->close();
       }

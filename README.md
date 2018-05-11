@@ -8,3 +8,25 @@ CAS authentication for the XP Framework
 [![Supports PHP 7.0+](https://raw.githubusercontent.com/xp-framework/web/master/static/php-7_0plus.png)](http://php.net/)
 [![Latest Stable Version](https://poser.pugx.org/xp-forge/auth-cas/version.png)](https://packagist.org/packages/xp-forge/auth-cas)
 
+Example
+-------
+
+```php
+use web\{Application, Filters};
+use web\auth\cas\CasLogin;
+use web\session\InFileSystem;
+
+class App extends Application {
+
+  public function routes() {
+    $login= new CasLogin('https://sso.example.com/', new InFileSystem('/var/tmp/sessions'));
+
+    return new Filters([$login], [
+      '/' => function($req, $res) {
+        $res->answer(200);
+        $res->send('Hello @'.$req->value('user')['username'], 'text/plain');
+      }
+    ]);
+  }
+}
+```

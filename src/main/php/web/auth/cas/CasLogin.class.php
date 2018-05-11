@@ -84,12 +84,8 @@ class CasLogin implements Filter {
       }
 
       $session= $this->sessions->create();
-      try {
-        $session->register('user', $user);
-        $response->cookie((new Cookie('session', $session->id()))->maxAge($this->sessions->duration()));
-      } finally {
-        $session->close();
-      }
+      $session->register('user', $user);
+      $session->transmit($response);
 
       $response->answer(302);
       $response->header('Location', $service);
@@ -97,14 +93,14 @@ class CasLogin implements Filter {
     }
 
     // Handle session
-    if ($session= $this->sessions->locate($request->cookie('session'))) {
+    if ($session= $this->sessions->locate($request)) {
       try {
         $request->pass('user', $session->value('user'));
         return $invocation->proceed($request, $response);
       } catch (SessionInvalid $e) {
         // Fall through, relogin
       } finally {
-        $session->close();
+        $session->transmit($response);
       }
     }
 

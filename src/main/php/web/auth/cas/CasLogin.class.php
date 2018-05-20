@@ -97,8 +97,6 @@ class CasLogin implements Filter {
       try {
         $request->pass('user', $session->value('user'));
         return $invocation->proceed($request, $response);
-      } catch (SessionInvalid $e) {
-        // Fall through, relogin
       } finally {
         $session->transmit($response);
       }

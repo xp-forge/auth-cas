@@ -3,16 +3,15 @@
 use io\streams\MemoryInputStream;
 use peer\http\HttpResponse;
 use unittest\TestCase;
-use web\auth\cas\CasLogin;
-use web\auth\cas\UseRequest;
-use web\auth\cas\ServiceURL;
-use web\auth\cas\BehindProxy;
 use web\Error;
+use web\Request;
+use web\Response;
+use web\auth\cas\CasLogin;
+use web\auth\cas\ServiceURL;
+use web\auth\cas\UseRequest;
 use web\filters\Invocation;
 use web\io\TestInput;
 use web\io\TestOutput;
-use web\Request;
-use web\Response;
 use web\session\ForTesting;
 
 class CasLoginTest extends TestCase {
@@ -212,51 +211,5 @@ class CasLoginTest extends TestCase {
   public function service_url_can_be_passed() {
     $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions, new ServiceURL('https://example.com/')));
     $this->assertLoginWith('https://example.com/', $res);
-  }
-
-  #[@test]
-  public function service_url_if_not_behind_proxy() {
-    $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions, new BehindProxy()));
-    $this->assertLoginWith('http://localhost/', $res);
-  }
-
-  #[@test]
-  public function service_url_behind_proxy() {
-    $res= $this->filter('/', ['X-Forwarded-Host' => 'example.com'], new CasLogin(
-      self::SSO,
-      $this->sessions,
-      (new BehindProxy())->using('https')
-    ));
-    $this->assertLoginWith('https://example.com/', $res);
-  }
-
-  #[@test]
-  public function service_url_behind_proxy_https_is_default() {
-    $res= $this->filter('/', ['X-Forwarded-Host' => 'example.com'], new CasLogin(
-      self::SSO,
-      $this->sessions,
-      new BehindProxy()
-    ));
-    $this->assertLoginWith('https://example.com/', $res);
-  }
-
-  #[@test, @values(['/app', '/app/'])]
-  public function service_url_behind_proxy_prefixed($base) {
-    $res= $this->filter('/one', ['X-Forwarded-Host' => 'example.com'], new CasLogin(
-      self::SSO,
-      $this->sessions,
-      (new BehindProxy())->prefixed($base)
-    ));
-    $this->assertLoginWith('https://example.com/app/one', $res);
-  }
-
-  #[@test, @values(['/app', '/app/'])]
-  public function service_url_behind_proxy_stripping($base) {
-    $res= $this->filter('/app/one', ['X-Forwarded-Host' => 'example.com'], new CasLogin(
-      self::SSO,
-      $this->sessions,
-      (new BehindProxy())->stripping($base)
-    ));
-    $this->assertLoginWith('https://example.com/one', $res);
   }
 }

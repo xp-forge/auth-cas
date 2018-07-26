@@ -34,8 +34,8 @@ class App extends Application {
 Proxies
 -------
 
-The service URL is calculated from the request URI by default. However, if the service is behind a reverse proxy, the front-facing URL needs to be reconstructed using proxy headers. This a typical scenario to implement clustering and to offload SSL.
+The service URL is calculated from the request URI by default. However, if the service is behind a reverse proxy, the front-facing URL needs to be passed in.
 
 ```php
-$login= new CasLogin('https://sso.example.com/', $sessions, (new BehindProxy())->using('https'));
+$login= new CasLogin('https://sso.example.com/', $sessions, new ServiceURL('https://app.example.com/'));
 ```

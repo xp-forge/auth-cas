@@ -3,7 +3,7 @@
 use util\URI;
 
 /**
- * Uses given URI as service URL
+ * Uses given URI as service base URL
  */
 class ServiceURL implements URL {
   private $uri;
@@ -20,6 +20,6 @@ class ServiceURL implements URL {
    * @return util.URI
    */
   public function resolve($request) {
-    return $this->uri;
+    return $this->uri->using()->path(rtrim($this->uri->path(), '/').$request->uri()->path())->create();
   }
 }

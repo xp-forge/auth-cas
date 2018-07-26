@@ -208,8 +208,20 @@ class CasLoginTest extends TestCase {
   }
 
   #[@test]
+  public function service_url_with_path() {
+    $res= $this->filter('/app', [], new CasLogin(self::SSO, $this->sessions, new UseRequest()));
+    $this->assertLoginWith('http://localhost/app', $res);
+  }
+
+  #[@test]
   public function service_url_can_be_passed() {
-    $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions, new ServiceURL('https://example.com/')));
-    $this->assertLoginWith('https://example.com/', $res);
+    $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions, new ServiceURL('https://app.example.com/')));
+    $this->assertLoginWith('https://app.example.com/', $res);
+  }
+
+  #[@test]
+  public function service_url_appends_base() {
+    $res= $this->filter('/app', [], new CasLogin(self::SSO, $this->sessions, new ServiceURL('https://example.com/')));
+    $this->assertLoginWith('https://example.com/app', $res);
   }
 }

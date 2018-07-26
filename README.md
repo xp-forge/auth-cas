@@ -30,3 +30,12 @@ class App extends Application {
   }
 }
 ```
+
+Proxies
+-------
+
+The service URL is calculated from the request URI by default. However, if the service is behind a reverse proxy, the front-facing URL needs to be passed in.
+
+```php
+$login= new CasLogin('https://sso.example.com/', $sessions, new ServiceURL('https://app.example.com/'));
+```

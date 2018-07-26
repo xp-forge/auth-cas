@@ -3,13 +3,15 @@
 use io\streams\MemoryInputStream;
 use peer\http\HttpResponse;
 use unittest\TestCase;
-use web\auth\cas\CasLogin;
 use web\Error;
+use web\Request;
+use web\Response;
+use web\auth\cas\CasLogin;
+use web\auth\cas\ServiceURL;
+use web\auth\cas\UseRequest;
 use web\filters\Invocation;
 use web\io\TestInput;
 use web\io\TestOutput;
-use web\Request;
-use web\Response;
 use web\session\ForTesting;
 
 class CasLoginTest extends TestCase {
@@ -52,6 +54,17 @@ class CasLoginTest extends TestCase {
     return $res;
   }
 
+  /**
+   * Asserts a given response redirects to a given SSO login
+   *
+   * @param  string $service
+   * @param  web.Response $res
+   * @throws unittest.AssertionFailedError
+   */
+  private function assertLoginWith($service, $res) {
+    $this->assertEquals(self::SSO.'/login?service='.urlencode($service), $res->headers()['Location']);
+  }
+
   #[@test]
   public function can_create() {
     new CasLogin(self::SSO, $this->sessions);
@@ -60,7 +73,7 @@ class CasLoginTest extends TestCase {
   #[@test]
   public function redirects_to_login() {
     $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions));
-    $this->assertEquals(self::SSO.'/login?service=http%3A%2F%2Flocalhost%2F', $res->headers()['Location']);
+    $this->assertLoginWith('http://localhost/', $res);
   }
 
   #[@test]
@@ -176,7 +189,7 @@ class CasLoginTest extends TestCase {
   #[@test]
   public function redirects_to_login_if_session_id_non_existant() {
     $res= $this->filter('/', ['Cookie' => 'session=@does.not.exist@'], new CasLogin(self::SSO, $this->sessions));
-    $this->assertEquals(self::SSO.'/login?service=http%3A%2F%2Flocalhost%2F', $res->headers()['Location']);
+    $this->assertLoginWith('http://localhost/', $res);
   }
 
   #[@test]
@@ -185,6 +198,30 @@ class CasLoginTest extends TestCase {
     $session->destroy();
 
     $res= $this->filter('/', ['Cookie' => 'session='.$session->id()], new CasLogin(self::SSO, $this->sessions));
-    $this->assertEquals(self::SSO.'/login?service=http%3A%2F%2Flocalhost%2F', $res->headers()['Location']);
+    $this->assertLoginWith('http://localhost/', $res);
+  }
+
+  #[@test]
+  public function service_url_determined_from_request() {
+    $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions, new UseRequest()));
+    $this->assertLoginWith('http://localhost/', $res);
+  }
+
+  #[@test]
+  public function service_url_with_path() {
+    $res= $this->filter('/app', [], new CasLogin(self::SSO, $this->sessions, new UseRequest()));
+    $this->assertLoginWith('http://localhost/app', $res);
+  }
+
+  #[@test]
+  public function service_url_can_be_passed() {
+    $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions, new ServiceURL('https://app.example.com/')));
+    $this->assertLoginWith('https://app.example.com/', $res);
+  }
+
+  #[@test]
+  public function service_url_appends_base() {
+    $res= $this->filter('/app', [], new CasLogin(self::SSO, $this->sessions, new ServiceURL('https://example.com/')));
+    $this->assertLoginWith('https://example.com/app', $res);
   }
 }

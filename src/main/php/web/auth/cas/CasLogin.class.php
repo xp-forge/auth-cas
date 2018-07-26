@@ -17,17 +17,19 @@ use web\session\Sessions;
  * @test  xp://web.auth.cas.unittest.CasLoginTest
  */
 class CasLogin implements Filter {
-  private $sso, $sessions;
+  private $sso, $sessions, $url;
 
   /**
    * Creates a new instance with a given SSO base url and sessions implementation
    *
    * @param  string $sso
    * @param  web.session.Sessions $sessions
+   * @param  web.auth.cas.URL $url The service URL, uses request URI by default
   */
-  public function __construct($sso, Sessions $sessions) {
+  public function __construct($sso, Sessions $sessions, URL $url= null) {
     $this->sso= rtrim($sso, '/');
     $this->sessions= $sessions;
+    $this->url= $url ?: new UseRequest();
   }
 
   /**
@@ -53,10 +55,11 @@ class CasLogin implements Filter {
    * @return var
    */
   public function filter($request, $response, $invocation) {
+    $uri= $this->url->resolve($request);
 
     // Validate ticket, then relocate to self without ticket parameter
     if ($ticket= $request->param('ticket')) {
-      $service= $request->uri()->using()->param('ticket', null)->create();
+      $service= $uri->using()->param('ticket', null)->create();
 
       $validate= $this->validate($ticket, $service);
       if (200 !== $validate->statusCode()) {
@@ -103,6 +106,6 @@ class CasLogin implements Filter {
     }
 
     $response->answer(302);
-    $response->header('Location', $this->sso.'/login?service='.urlencode($request->uri()));
+    $response->header('Location', $this->sso.'/login?service='.urlencode($uri));
   }
 }

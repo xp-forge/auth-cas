@@ -3,6 +3,10 @@ Sessions for the XP Framework ChangeLog
 
 ## ?.?.? / ????-??-??
 
+## 0.3.0 / 2018-08-12
+
+* Implemented feature request #2: Support redirecting #-URLs - @thekid
+
 ## 0.2.0 / 2018-07-26
 
 * Added version compatibility with `xp-forge/sessions` 0.3.0 and 0.2.0

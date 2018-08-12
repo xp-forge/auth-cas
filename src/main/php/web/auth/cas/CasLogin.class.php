@@ -55,9 +55,17 @@ class CasLogin implements Filter {
    * @return var
    */
   public function filter($request, $response, $invocation) {
-    $uri= $this->url->resolve($request);
+    if ($session= $this->sessions->locate($request)) {
+      try {
+        $request->pass('user', $session->value('user'));
+        return $invocation->proceed($request, $response);
+      } finally {
+        $session->transmit($response);
+      }
+    }
 
     // Validate ticket, then relocate to self without ticket parameter
+    $uri= $this->url->resolve($request);
     if ($ticket= $request->param('ticket')) {
       $service= $uri->using()->param('ticket', null)->create();
 
@@ -93,16 +101,6 @@ class CasLogin implements Filter {
       $response->answer(302);
       $response->header('Location', $service->using()->param('_', null)->fragment($request->param('_'), false)->create());
       return;
-    }
-
-    // Handle session
-    if ($session= $this->sessions->locate($request)) {
-      try {
-        $request->pass('user', $session->value('user'));
-        return $invocation->proceed($request, $response);
-      } finally {
-        $session->transmit($response);
-      }
     }
 
     // Send redirect using JavaScript to capture URL fragments (see issue #2).

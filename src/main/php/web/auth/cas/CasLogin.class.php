@@ -1,14 +1,14 @@
 <?php namespace web\auth\cas;
 
-use web\Cookie;
-use web\Filter;
-use web\Error;
 use peer\http\HttpConnection;
+use web\Cookie;
+use web\Error;
+use web\Filter;
+use web\session\Sessions;
 use xml\XMLFormatException;
 use xml\dom\Document;
-use xml\parser\XMLParser;
 use xml\parser\StreamInputSource;
-use web\session\Sessions;
+use xml\parser\XMLParser;
 
 /**
  * CAS Login filter
@@ -91,7 +91,7 @@ class CasLogin implements Filter {
       $session->transmit($response);
 
       $response->answer(302);
-      $response->header('Location', $service);
+      $response->header('Location', $service->using()->param('_', null)->fragment($request->param('_'), false)->create());
       return;
     }
 
@@ -105,7 +105,34 @@ class CasLogin implements Filter {
       }
     }
 
-    $response->answer(302);
-    $response->header('Location', $this->sso.'/login?service='.urlencode($uri));
+    // Send redirect using JavaScript to capture URL fragments (see issue #2).
+    // Include meta refresh in body as fallback for when JavaScript is disabled,
+    // in which case we lose the fragment, but still offer a degraded service.
+    // Do not move this to HTTP headers to ensure the body has been parsed, and
+    // the JavaScript executed!
+    $target= $this->sso.'/login?service='.urlencode($uri);
+    $redirect= sprintf('<!DOCTYPE html>
+      <html>
+        <head>
+          <title>Redirect</title>
+          <meta http-equiv="refresh" content="1; URL=%1$s">
+        </head>
+        <body>
+          <script type="text/javascript">
+            var hash = document.location.hash.substring(1);
+            if (hash) {
+              document.location.replace("%1$s" + encodeURIComponent(
+                (document.location.search ? "&=" : "?_=") +
+                encodeURIComponent(hash)
+              ));
+            } else {
+              document.location.replace("%1$s");
+            }
+          </script>
+        </body>
+      </html>',
+      $target
+    );
+    $response->send($redirect, 'text/html');
   }
 }

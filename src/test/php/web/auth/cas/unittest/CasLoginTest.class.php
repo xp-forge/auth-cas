@@ -62,7 +62,8 @@ class CasLoginTest extends TestCase {
    * @throws unittest.AssertionFailedError
    */
   private function assertLoginWith($service, $res) {
-    $this->assertEquals(self::SSO.'/login?service='.urlencode($service), $res->headers()['Location']);
+    preg_match('/<meta http-equiv="refresh" content="1; URL=([^"]+)">/', $res->output()->bytes(), $m);
+    $this->assertEquals(self::SSO.'/login?service='.urlencode($service), $m[1]);
   }
 
   #[@test]
@@ -70,10 +71,15 @@ class CasLoginTest extends TestCase {
     new CasLogin(self::SSO, $this->sessions);
   }
 
-  #[@test]
-  public function redirects_to_login() {
-    $res= $this->filter('/', [], new CasLogin(self::SSO, $this->sessions));
-    $this->assertLoginWith('http://localhost/', $res);
+  #[@test, @values([
+  #  '/',
+  #  '/path',
+  #  '/?a=b',
+  #  '/?a=b&c=d',
+  #])]
+  public function redirects_to_login($uri) {
+    $res= $this->filter($uri, [], new CasLogin(self::SSO, $this->sessions));
+    $this->assertLoginWith('http://localhost'.$uri, $res);
   }
 
   #[@test]
